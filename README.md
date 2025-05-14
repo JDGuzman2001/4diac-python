@@ -1,21 +1,21 @@
-# 4DIAC Socket Communication Client
+# 4DIAC Socket Communication Server
 
-This Python client implements a socket-based communication interface for 4DIAC (Framework for Industrial Automation and Control). It provides a robust way to establish TCP/IP connections with 4DIAC runtime environment (FORTE) and handle data exchange.
+This Python server implements a socket-based communication interface for 4DIAC (Framework for Industrial Automation and Control). It provides a robust way to establish TCP/IP connections and handle XML-based communication with 4DIAC clients.
 
 ## Features
 
-- TCP/IP socket communication with 4DIAC runtime
-- Comprehensive data analysis and visualization
-- Multiple data format support
+- TCP/IP socket server implementation
+- XML message parsing and handling
+- Support for QUERY and READ actions
 - Detailed logging and error handling
 - Connection management
-- Support for both text and binary data
+- Multiple client support
 
 ## Requirements
 
 - Python 3.x
-- Running instance of 4DIAC-RTE (FORTE)
-- Network connectivity to the 4DIAC runtime
+- Network connectivity
+- XML message format compliance
 
 ## Installation
 
@@ -25,180 +25,88 @@ This Python client implements a socket-based communication interface for 4DIAC (
 
 ## Usage
 
-### Basic Usage
+### Running the Server
 
 ```python
-from main import FORDIAC_Client
-
-# Create a client instance
-client = FORDIAC_Client(host='localhost', port=61499)
-
-# Connect to 4DIAC
-if client.connect():
-    try:
-        # Send text data
-        client.send_data(b"Hello 4DIAC!")
-        
-        # Receive response
-        response = client.receive_data()
-        
-    finally:
-        client.disconnect()
+# The server will start listening on localhost:61499 by default
+python main.py
 ```
 
-### Advanced Usage
+### Supported XML Actions
 
-```python
-import struct
-from main import FORDIAC_Client
+The server currently supports the following XML actions:
 
-client = FORDIAC_Client(host='192.168.1.100', port=61499)
+1. **QUERY**
+   - Query for resources or specific FBs
+   - Example request:
+     ```xml
+     <Request ID="1" Action="QUERY">
+         <FB Name="*" Type="*"/>
+     </Request>
+     ```
 
-if client.connect():
-    try:
-        # Send float data
-        float_value = 123.456
-        float_bytes = struct.pack('!f', float_value)
-        client.send_data(float_bytes)
-        
-        # Receive and analyze response
-        response = client.receive_data()
-        
-    finally:
-        client.disconnect()
-```
+2. **READ**
+   - Read operation
+   - Example request:
+     ```xml
+     <Request ID="1" Action="READ">
+     </Request>
+     ```
 
-## Class Description
+## Server Implementation Details
 
-### FORDIAC_Client
+### Configuration
 
-The main class that handles all communication with 4DIAC.
+The server is configured with the following default settings:
+- Host: 127.0.0.1
+- Port: 61499
 
-#### Constructor Parameters
+### Message Processing
 
-- `host` (str): The host address of the 4DIAC runtime (default: 'localhost')
-- `port` (int): The port number (default: 61499)
+The server processes incoming XML messages with the following features:
 
-#### Main Methods
+1. **XML Parsing**
+   - Validates XML structure
+   - Extracts action type and parameters
+   - Handles malformed XML gracefully
 
-1. `connect()`
-   - Establishes connection to 4DIAC runtime
-   - Returns: bool (True if successful)
+2. **Response Generation**
+   - Generates appropriate XML responses
+   - Includes status and error information
+   - Maintains request ID in responses
 
-2. `disconnect()`
-   - Safely closes the connection
-   - No return value
+### Error Handling
 
-3. `send_data(data)`
-   - Sends data to 4DIAC runtime
-   - Parameters:
-     - `data` (bytes): Data to send
-   - Returns: bool (True if successful)
-
-4. `receive_data(buffer_size=1024)`
-   - Receives data from 4DIAC runtime
-   - Parameters:
-     - `buffer_size` (int): Size of receive buffer
-   - Returns: bytes or None
-
-5. `print_data_info(data, source="")`
-   - Analyzes and displays detailed information about data
-   - Parameters:
-     - `data` (bytes): Data to analyze
-     - `source` (str): Description of data source
-
-## Data Analysis Features
-
-The client provides comprehensive data analysis through the `print_data_info` method, which shows:
-
-1. **Basic Information**
-   - Raw data representation
-   - Data type
-   - Length in bytes
-
-2. **Hexadecimal Representation**
-   - Data in hexadecimal format
-
-3. **Text Representations**
-   - UTF-8 encoding
-   - ASCII encoding
-   - ISO-8859-1 encoding
-
-4. **Numeric Interpretations**
-   - 32-bit integer
-   - Float (32-bit)
-   - Double (64-bit)
-
-## Logging
-
-The client implements two levels of logging:
-
-1. **File Logging**
-   - Uses Python's logging module
-   - Logs to console with timestamp
-   - Includes INFO and ERROR level messages
-
-2. **Console Output**
-   - Uses formatted print statements
-   - Includes visual indicators:
-     - `[+]` Success messages
-     - `[-]` Error messages
-     - `[>]` Sent data
-     - `[<]` Received data
-     - `[*]` General information
-
-## Error Handling
-
-The client includes comprehensive error handling for:
+The server includes comprehensive error handling for:
 - Connection failures
-- Send/receive operations
-- Data encoding/decoding
+- XML parsing errors
+- Invalid message formats
 - Socket errors
-
-## Common Use Cases
-
-1. **Simple Text Communication**
-```python
-client.send_data(b"Hello 4DIAC!")
-```
-
-2. **Sending Numeric Data**
-```python
-float_data = struct.pack('!f', 123.456)
-client.send_data(float_data)
-```
-
-3. **Continuous Monitoring**
-```python
-while client.connected:
-    response = client.receive_data()
-    time.sleep(1)
-```
 
 ## Best Practices
 
-1. Always use the client in a try-finally block to ensure proper disconnection
-2. Check the connection status before sending/receiving data
-3. Handle the received data appropriately based on the expected format
-4. Monitor the detailed data analysis output for debugging
-5. Use appropriate buffer sizes based on your data requirements
+1. Ensure proper XML formatting in client messages
+2. Handle server responses appropriately
+3. Implement proper error handling on the client side
+4. Monitor server logs for debugging
+5. Use appropriate message sizes
 
 ## Troubleshooting
 
 1. **Connection Issues**
-   - Verify 4DIAC-RTE is running
+   - Verify server is running
    - Check host and port settings
    - Ensure network connectivity
 
-2. **Data Format Issues**
-   - Use the data analysis output to verify data format
-   - Ensure proper data packing/unpacking
-   - Check encoding compatibility
+2. **XML Format Issues**
+   - Verify XML structure
+   - Check action names
+   - Ensure proper attribute formatting
 
 3. **Performance Issues**
-   - Adjust buffer size for large data
    - Monitor system resources
    - Check network latency
+   - Verify client connection handling
 
 ## Contributing
 
